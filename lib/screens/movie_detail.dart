@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:imdb_api_example/model/movies_details.dart';
 import 'package:imdb_api_example/services/api_services.dart';
+import 'package:imdb_api_example/widgets/cast_list.dart';
 
 class MovieDetailScreen extends StatelessWidget {
   final int movieId;
@@ -9,21 +10,21 @@ class MovieDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder<MovieDetail>(
-        future: ApiServices().getMovieDetails(movieId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Hata: ${snapshot.error}"));
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text("Film detayı bulunamadı."));
-          }
-
-          final movie = snapshot.data!;
-          return SingleChildScrollView(
-            child: Column(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        body: FutureBuilder<MovieDetail>(
+          future: ApiServices().getMovieDetails(movieId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text("Hata: ${snapshot.error}"));
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text("Film detayı bulunamadı."));
+            }
+            final movie = snapshot.data!;
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
@@ -48,7 +49,6 @@ class MovieDetailScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -66,8 +66,7 @@ class MovieDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               movie.title,
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
                             Text(movie.tagline ?? ''),
@@ -81,45 +80,50 @@ class MovieDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    movie.overview,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                const SizedBox(height: 10),
+                const TabBar(
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: [
+                    Tab(text: "Overview"),
+                    Tab(text: "Cast & Crew"),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Wrap(
-                    spacing: 8,
-                    children: movie.genres
-                        .map((genre) => Chip(label: Text(genre.name)))
-                        .toList(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: TabBarView(
                     children: [
-                      Text("🎬 Language: ${movie.originalLanguage.toUpperCase()}"),
-                      const SizedBox(height: 4),
-                      Text("💰 Budget: \$${movie.budget}"),
-                      const SizedBox(height: 4),
-                      Text("🗓️ Release Date ${movie.releaseDate}"),
-                      const SizedBox(height: 4),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              movie.overview,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                             Wrap(
+                              spacing: 8,
+                              children: movie.genres
+                                  .map((genre) => Chip(label: Text(genre.name)))
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 20),
+                            Text("🎬 Language: ${movie.originalLanguage.toUpperCase()}"),
+                            const SizedBox(height: 4),
+                            Text("💰 Budget: \$${movie.budget}"),
+                            const SizedBox(height: 4),
+                            Text("🗓️ Release Date: ${movie.releaseDate}"),
+                          ],
+                        ),
+                      ),
+                      CastListWidget(movieId: movieId),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 30),
               ],
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
